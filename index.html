@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>評価基準の体裁を整える</title>
+    <script>
+        function hensyuu(){
+            let message=document.getElementById("nyuuryoku").value;
+            if(message.match(/^・/)) message=message.replace(/・/,"")
+            let ginou=message.match(/CC<=\d+\s+【.*?】/g);
+            let ginouname=ginou.map(e=>e.replace(/CC<=\d+\s+【(.*?)】/g,"$1"));
+            let ginouti=ginou.map(e=>e.replace(/CC<=(\d+)\s+【.*?】/g,"$1"));
+            let chat="CC<={SAN} 【SAN値チェック】\\n";
+            let param=",\"params\": [";
+            for(let i=0;i<ginou.length;i++){
+                chat+="CC<={"+ginouname[i]+"} 【"+ginouname[i]+"】\\n";
+                param+="{\"label\": \""+ginouname[i]+"\", \"value\": \""+ginouti[i]+"\"}";
+                if(i!=ginou.length-1) param+=",";
+            }
+            param+="]";
+            let tmp="\"commands\":\""+chat+"\",\"status"
+            message=message.replace(/"commands".*?"status/,tmp);
+            message=message.replace(/\]\}\}/,"]"+param+"}}")
+            let status=message.match(/"status":\[.*?\]/g)[0].slice(0,-1)+",{\"label\":\"ボーナス・ペナルティ\",\"value\":0,\"max\":2}]"
+            message=message.replace(/"status":\[.*?\]/,status);
+            console.log(param)
+            document.getElementById("hensyuugo").value=message;
+            navigator.clipboard.writeText(message);
+        }
+
+        function copy(message){
+            navigator.clipboard.writeText(message.value);
+        }
+    </script>
+</head>
+<body>
+    体裁を整えたい文章を下にペースト<br>
+    <textarea id="nyuuryoku" rows="20" cols="80" oninput="hensyuu()"></textarea><br>
+    ⇓<br>編集後(自動でコピーされています)<br>
+    <textarea id="hensyuugo" rows="20" cols="80" oninput="copy(this)"></textarea>
+</body>
+</html>
