@@ -4,30 +4,73 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>評価基準の体裁を整える</title>
+    <title>ココフォリアのキャラコマを作る</title>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script>
-        function hensyuu(){
-            let message=document.getElementById("nyuuryoku").value;
-            if(message.match(/^・/)) message=message.replace(/・/,"")
-            let ginou=message.match(/CC<=\d+\s+【.*?】/g);
-            let ginouname=ginou.map(e=>e.replace(/CC<=\d+\s+【(.*?)】/g,"$1"));
-            let ginouti=ginou.map(e=>e.replace(/CC<=(\d+)\s+【.*?】/g,"$1"));
-            let chat="CC<={SAN} 【SAN値チェック】\\n";
-            let param=",\"params\": [";
+        function decide(e){
+            if(e.value.startsWith("https://charasheet.vampire-blood.net/")) charasheet_to_ccforia();
+            else iacara_to_ccforia();
+        }
+
+        function charasheet_to_ccforia(){
+            const url=document.getElementById("nyuuryoku").value;
+            $.ajax({
+                url: url+".js",
+                type: 'GET',
+                dataType: 'jsonp',
+                jsonpCallback: 'callback'
+            })
+            .done(function(jsondata){
+                let json={kind:"character",data:{}};
+                json.data.name=jsondata.pc_name;
+                json.data.initiative=Number(jsondata.NP3);
+                json.data.externalUrl=url;
+                json.data.iconUrl=null;
+                json.data.params=[];
+
+                let chat="CC{ボーナス・ペナルティ}<={SAN} 【SAN値チェック】\nCC{ボーナス・ペナルティ}<={INT} 【アイデア】\nCC{ボーナス・ペナルティ}<={幸運} 【幸運】\nCC{ボーナス・ペナルティ}<={EDU} 【知識】\n";
+                for(let i=0;i<jsondata.SKAN.length;i++){
+                    chat+=`CC{ボーナス・ペナルティ}<={${jsondata.SKAN[i]}} 【${jsondata.SKAN[i]}】\n`;
+                    let name=jsondata.SKAN[i];
+                    if(jsondata.SKAM[i]!="") name+=`(${jsondata.SKAM[i]})`;
+                    json.data.params.push({label:name, value:jsondata.SKAP[i]});
+                }
+                const nouryoku=["STR","CON","DEX","APP","POW","SIZ","INT","EDU"];
+                for(let i=1;i<=8;i++){
+                    json.data.params.push({label:nouryoku[i-1],value:jsondata["NP"+i]})
+                }
+                chat+="CC{ボーナス・ペナルティ}<={STR} 【STR】\nCC{ボーナス・ペナルティ}<={CON} 【CON】\nCC{ボーナス・ペナルティ}<={POW} 【POW】\nCC{ボーナス・ペナルティ}<={DEX} 【DEX】\nCC{ボーナス・ペナルティ}<={APP} 【APP】\nCC{ボーナス・ペナルティ}<={SIZ} 【SIZ】\nCC{ボーナス・ペナルティ}<={INT} 【INT】\nCC{ボーナス・ペナルティ}<={EDU} 【EDU】\n";
+                
+                json.data.commands=chat;
+            
+                json.data.status=[];
+                json.data.status.push({label:"HP",value:Number(jsondata.NP10),max:Number(jsondata.NP10)});
+                json.data.status.push({label:"MP",value:Number(jsondata.NP11),max:Number(jsondata.NP11)});
+                json.data.status.push({label:"SAN",value:Number(jsondata.SAN_Left),max:Number(jsondata.SAN_start)});
+                json.data.status.push({label:"ボーナス・ペナルティ",value:0,max:2});
+                json.data.status.push({label:"幸運",value:Number(jsondata.Luck_Left),max:Number(jsondata.Luck_start)});
+                document.getElementById("hensyuugo").value=JSON.stringify(json);
+                navigator.clipboard.writeText(JSON.stringify(json));
+            })
+        }
+
+        function iacara_to_ccforia(){
+            let json=JSON.parse(document.getElementById("nyuuryoku").value);
+            let ginou=json.data.commands.match(/CCB?<=\d+\s+【.*?】/g);
+            let ginouname=ginou.map(e=>e.replace(/CCB?<=\d+\s+【(.*?)】/g,"$1"));
+            let ginouti=ginou.map(e=>e.replace(/CCB?<=(\d+)\s+【.*?】/g,"$1"));
+            json.data.commands="CC({ボーナス・ペナルティ})<={SAN} 【SAN値チェック】\n";
+            json.data.params=[]
+            let luck
             for(let i=0;i<ginou.length;i++){
-                chat+="CC<={"+ginouname[i]+"} 【"+ginouname[i]+"】\\n";
-                param+="{\"label\": \""+ginouname[i]+"\", \"value\": \""+ginouti[i]+"\"}";
-                if(i!=ginou.length-1) param+=",";
+                json.data.commands+="CC({ボーナス・ペナルティ})<={"+ginouname[i]+"} 【"+ginouname[i]+"】\n";
+                if(ginouname[i]!="幸運")
+                    json.data.params.push({label:ginouname[i],value:ginouti[i]});
+                else luck=ginouti[i];
             }
-            param+="]";
-            let tmp="\"commands\":\""+chat+"\",\"status"
-            message=message.replace(/"commands".*?"status/,tmp);
-            message=message.replace(/\]\}\}/,"]"+param+"}}")
-            let status=message.match(/"status":\[.*?\]/g)[0].slice(0,-1)+",{\"label\":\"ボーナス・ペナルティ\",\"value\":0,\"max\":2}]"
-            message=message.replace(/"status":\[.*?\]/,status);
-            console.log(param)
-            document.getElementById("hensyuugo").value=message;
-            navigator.clipboard.writeText(message);
+            json.data.status.push({label:"ボーナス・ペナルティ",value:0,max:2},{label:"幸運",value:luck,max:luck})
+            document.getElementById("hensyuugo").value=JSON.stringify(json);
+            navigator.clipboard.writeText(JSON.stringify(json));
         }
 
         function copy(message){
@@ -36,9 +79,11 @@
     </script>
 </head>
 <body>
-    体裁を整えたい文章を下にペースト<br>
-    <textarea id="nyuuryoku" rows="20" cols="80" oninput="hensyuu()"></textarea><br>
-    ⇓<br>編集後(自動でコピーされています)<br>
+    7版のみ対応してます。<br>
+    いあきゃらなら「すべての技能を出力」したものをペースト<br>
+    キャラクター保管所ならURLをペースト<br>
+    <textarea id="nyuuryoku" rows="20" cols="80" oninput="decide(this)"></textarea><br>
+    ⇓<br>これをココフォリアに張り付けてください(自動でコピーされています)<br>
     <textarea id="hensyuugo" rows="20" cols="80" oninput="copy(this)"></textarea>
 </body>
 </html>
