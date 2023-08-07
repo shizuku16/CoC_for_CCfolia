@@ -30,9 +30,9 @@
 
                 let chat="CC{ボーナス・ペナルティ}<={SAN} 【SAN値チェック】\nCC{ボーナス・ペナルティ}<={INT} 【アイデア】\nCC{ボーナス・ペナルティ}<={幸運} 【幸運】\nCC{ボーナス・ペナルティ}<={EDU} 【知識】\n";
                 for(let i=0;i<jsondata.SKAN.length;i++){
-                    chat+=`CC{ボーナス・ペナルティ}<={${jsondata.SKAN[i]}} 【${jsondata.SKAN[i]}】\n`;
                     let name=jsondata.SKAN[i];
                     if(jsondata.SKAM[i]!="") name+=`(${jsondata.SKAM[i]})`;
+                    chat+=`CC{ボーナス・ペナルティ}<={${name}} 【${name}】\n`;
                     json.data.params.push({label:name, value:jsondata.SKAP[i]});
                 }
                 const nouryoku=["STR","CON","DEX","APP","POW","SIZ","INT","EDU"];
