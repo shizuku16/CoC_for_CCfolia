@@ -57,8 +57,8 @@
         function iacara_to_ccforia(){
             let json=JSON.parse(document.getElementById("nyuuryoku").value);
             let ginou=json.data.commands.match(/CCB?<=.*?【.*?】/g);
-            let ginouname=ginou.map(e=>e.replace(/CCB?<=.*?【(.*?)】/g,"$1"));
-            let ginouti=ginou.map(e=>e.replace(/CCB?<=(.*?)\s+【.*?】/g,"$1"));
+            let ginouname=ginou.map(e=>e.replace(/CCB?<=.*?【(.*?)\s?×?\s?5?】/g,"$1"));
+            let ginouti=ginou.map(e=>e.replace(/CCB?<=(\d+)\*?5?\s+【.*?】/g,"$1"));
             json.data.commands="CC({ボーナス・ペナルティ})<={SAN} 【SAN値チェック】\n";
             json.data.params=[]
             let luck
