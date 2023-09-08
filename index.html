@@ -56,9 +56,9 @@
 
         function iacara_to_ccforia(){
             let json=JSON.parse(document.getElementById("nyuuryoku").value);
-            let ginou=json.data.commands.match(/CCB?<=\d+\s+【.*?】/g);
-            let ginouname=ginou.map(e=>e.replace(/CCB?<=\d+\s+【(.*?)】/g,"$1"));
-            let ginouti=ginou.map(e=>e.replace(/CCB?<=(\d+)\s+【.*?】/g,"$1"));
+            let ginou=json.data.commands.match(/CCB?<=.*?【.*?】/g);
+            let ginouname=ginou.map(e=>e.replace(/CCB?<=.*?【(.*?)】/g,"$1"));
+            let ginouti=ginou.map(e=>e.replace(/CCB?<=(.*?)\s+【.*?】/g,"$1"));
             json.data.commands="CC({ボーナス・ペナルティ})<={SAN} 【SAN値チェック】\n";
             json.data.params=[]
             let luck
@@ -82,7 +82,7 @@
 </head>
 <body>
     <a href="./技能ボタン.zip">技能ボタンのダウンロードはこちら</a><br>
-    6版、7版ともに対応してます。<br>
+    7版のみ対応してます。<br>
     いあきゃらなら「すべての技能を出力」したものをペースト<br>
     キャラクター保管所ならURLをペースト<br>
     <textarea id="nyuuryoku" rows="20" cols="80" oninput="decide(this)"></textarea><br>
