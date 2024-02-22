@@ -56,19 +56,18 @@
 
         function iacara_to_ccforia(){
             let json=JSON.parse(document.getElementById("nyuuryoku").value);
-            let ginou=json.data.commands.match(/CCB?<=.*?【.*?】/g);
+            let ginou=json.data.commands.match(/CCB?<=[^{].*?【.*?】/g);
             let ginouname=ginou.map(e=>e.replace(/CCB?<=.*?【(.*?)\s?×?\s?5?】/g,"$1"));
             let ginouti=ginou.map(e=>e.replace(/CCB?<=(\d+)\*?5?\s+【.*?】/g,"$1"));
-            json.data.commands="CC({ボーナス・ペナルティ})<={SAN} 【SAN値チェック】\n";
-            json.data.params=[]
-            let luck
+            json.data.commands="CC({ボーナス・ペナルティ})<={SAN} 【SAN値チェック】\nCC({ボーナス・ペナルティ})<={幸運} 【幸運】\n";
+            json.data.params.forEach(element => {
+                json.data.commands+=`CC({ボーナス・ペナルティ})<={${element.label}} 【${element.label}】\n`;
+            });
             for(let i=0;i<ginou.length;i++){
-                json.data.commands+="CC({ボーナス・ペナルティ})<={"+ginouname[i]+"} 【"+ginouname[i]+"】\n";
-                if(ginouname[i]!="幸運")
-                    json.data.params.push({label:ginouname[i],value:ginouti[i]});
-                else luck=ginouti[i];
+                json.data.commands+=`CC({ボーナス・ペナルティ})<={${ginouname[i]}} 【${ginouname[i]}】\n`;
+                json.data.params.push({label:ginouname[i],value:ginouti[i]});
             }
-            json.data.status.push({label:"ボーナス・ペナルティ",value:0,max:2},{label:"幸運",value:luck,max:luck})
+            json.data.status.push({label:"ボーナス・ペナルティ",value:0,max:2})
             if(ginouname.includes("マーシャルアーツ"))
                 json.data.commands=json.data.commands.replace(/CC/g,"CCB");
             document.getElementById("hensyuugo").value=JSON.stringify(json);
